@@ -1,7 +1,11 @@
 const express = require("express");
 const app = express();
+
 const healthRouter = require("./routes/health.routes.js");
 const infoRouter = require("./routes/info.routes.js");
+
+const notFound = require("./middlewares/notFound.middleware.js");
+const errorHandler = require("./middlewares/error.middleware.js");
 
 app.use(express.json());
 
@@ -20,5 +24,8 @@ app.post("/test" , (req , res)=>{
         data : req.body
     });
 });
+
+app.use(notFound);
+app.use(errorHandler);
 
 module.exports = app;
