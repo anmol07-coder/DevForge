@@ -12,19 +12,6 @@ app.use(express.json());
 app.use("/api/v1/health" , healthRouter);
 app.use("/api/vi/info" , infoRouter);
 
-app.get("/" , (req , res) =>{
-    res.send("Welcome to devforge API");
-});
-
-app.post("/test" , (req , res)=>{
-    console.log(req.body);
-
-    res.json({
-        message : "Data received successfully",
-        data : req.body
-    });
-});
-
 app.use(notFound);
 app.use(errorHandler);
 
