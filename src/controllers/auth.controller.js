@@ -33,4 +33,28 @@ const login = async(req , res , next)=>{
         next(err);
     }
 }
-module.exports = {register , login};
+
+const getCurrentUser = async(req , res , next) =>{
+    try{
+        const user = req.user;
+
+        res.status(200).json({
+            success : true,
+            data : {
+                user : {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    isEmailVerified: user.isEmailVerified,
+                    createdAt: user.createdAt
+                }
+            }
+        })
+    }
+
+    catch(err){
+        next(err); 
+    }
+}
+module.exports = {register , login , getCurrentUser};

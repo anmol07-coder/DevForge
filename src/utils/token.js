@@ -13,6 +13,12 @@ const generateAccessToken = (userId) =>{
     )
 };
 
+
+const verifyAccessToken = (token)=>{
+    return jwt.verify(token , env.jwtSecret);
+}
+
 module.exports = {
-    generateAccessToken
+    generateAccessToken,
+    verifyAccessToken
 };
