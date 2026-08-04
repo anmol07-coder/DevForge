@@ -18,6 +18,19 @@ const registerSchema = z.object({
                .max(50, "Password can not contain more than 50 characters")
 });
 
+const loginSchema = z.object({
+    email : z
+            .string()
+            .trim()
+            .email("Please provide a valid email")
+            .toLowerCase(),
+
+    password : z
+               .string()
+               .min(1 , "Password can not be empty")
+})
+
 module.exports = {
-    registerSchema
+    registerSchema,
+    loginSchema
 };

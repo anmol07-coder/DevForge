@@ -10,7 +10,7 @@ const startServer = async()=>{
         });
     }
     catch(err){
-        console.error("Failed to start DevForge:", error);
+        console.error("Failed to start DevForge:", err);
         process.exit(1);
     }
 }
