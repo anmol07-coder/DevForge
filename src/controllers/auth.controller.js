@@ -1,4 +1,6 @@
 const authService = require("../services/auth.service.js");
+const env = require("../config/env");
+const { verifyAccessToken , verifyRefreshToken } = require("../utils/token.js");
 
 const register = async(req , res , next)=>{
     try{
@@ -19,13 +21,26 @@ const register = async(req , res , next)=>{
 
 const login = async(req , res , next)=>{
     try{
-        const user = await authService.loginUser(req.body);
+        const {user , accessToken , refreshToken} = await authService.loginUser(req.body);
+        
+        res.cookie(
+            "refreshToken",
+            refreshToken,
+            {
+                httpOnly : true,
+                secure : env.nodeEnv === "production",
+                sameSite : "strict",
+                maxAge : 7*24*60*60*1000
+            }
+        )
 
         res.status(201).json({
             success : true,
             message : `Welcome to DevForge ${user.name}`,
             data : {
-                user
+                user,
+                accessToken,
+                tokenType : "Bearer"
             }
         });
     }
@@ -57,4 +72,71 @@ const getCurrentUser = async(req , res , next) =>{
         next(err); 
     }
 }
-module.exports = {register , login , getCurrentUser};
+
+const refresh = async(req , res , next) =>{
+    try{
+        const refreshToken = req.cookies.refreshToken;
+
+        if (!refreshToken) {
+            throw new AppError(
+                "Refresh token is required",
+                401
+            );
+        }
+
+        const decoded = verifyRefreshToken(refreshToken);
+
+        const accessToken = await authService.refreshAccessToken(decoded.userId);
+
+        res.status(200).json({
+            success : true,
+            message : "Access token refreshed successfully",
+            data : {
+                accessToken,
+                tokenType : "Bearer"
+            }
+        }
+    );
+
+    }
+
+    catch(err){
+        if (
+            error.name === "JsonWebTokenError" ||
+            error.name === "TokenExpiredError"
+        ) {
+            return next(
+                new AppError(
+                    "Invalid or expired refresh token",
+                    401
+                )
+            );
+        }
+
+        next(error);
+    }
+}
+
+const logout = async(req , res , next) =>{
+    try{
+        res.clearCookie(
+            "refreshToken",
+            {
+                httpOnly : true,
+                secure : env.nodeEnv === "production",
+                sameSite : "strict"
+            }
+        );
+
+        res.status(200).json({
+            success : true,
+            message : "Logout successful"
+        });
+    }
+
+    catch(err){
+        next(err);
+    }
+}
+
+module.exports = {register , login , getCurrentUser , refresh , logout};

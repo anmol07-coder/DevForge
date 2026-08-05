@@ -18,7 +18,25 @@ const verifyAccessToken = (token)=>{
     return jwt.verify(token , env.jwtSecret);
 }
 
+const generateRefreshToken = (userId) =>{
+    return jwt.sign(
+        {
+            userId
+        },
+        env.jwtRefreshSecret,
+        {
+            expiresIn : env.jwtRefreshExpiresIn
+        }
+    )
+}
+
+const verifyRefreshToken = (token)=>{
+    return jwt.verify(token , env.jwtRefreshSecret);
+}
+
 module.exports = {
     generateAccessToken,
-    verifyAccessToken
+    verifyAccessToken,
+    generateRefreshToken,
+    verifyRefreshToken
 };

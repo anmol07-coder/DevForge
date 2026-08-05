@@ -1,7 +1,7 @@
 const AppError = require("../utils/AppError");
 const User = require("../models/user.model");
 
-const { generateAccessToken } = require("../utils/token.js")
+const { generateAccessToken , generateRefreshToken} = require("../utils/token.js")
 
 const bcrypt = require("bcrypt");
 
@@ -58,6 +58,7 @@ const loginUser = async ({email , password})=>{
     }
 
     const accessToken = generateAccessToken(user._id.toString());
+    const refreshToken = generateRefreshToken(user._id.toString());
 
     return {
         user: {
@@ -69,11 +70,26 @@ const loginUser = async ({email , password})=>{
             
         },
         accessToken,
+        refreshToken,
         tokenType: "Bearer"
     };
 };
 
+const refreshAccessToken = async(userId) =>{
+    const user = await User.findById(userId);
+
+    if(!user){
+        throw new AppError(
+            "User associated with this session no longer exists",
+            401
+        )
+    }
+
+    return generateAccessToken(user._id.toString());
+}
+
 module.exports = {
     registerUser,
-    loginUser
+    loginUser,
+    refreshAccessToken
 }
