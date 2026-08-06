@@ -30,7 +30,24 @@ const loginSchema = z.object({
                .min(1 , "Password can not be empty")
 })
 
+const forgotPasswordSchema = z.object({
+    email : z
+            .string()
+            .trim()
+            .email("Please provide a valid email")
+            .toLowerCase()
+})
+
+const resetPasswordSchema = z.object({
+    password : z
+                .string()
+                .min(8 , "Password must contain at least 8 characters")
+                .max(72, "Password cannot exceed 72 characters")
+})
+
 module.exports = {
     registerSchema,
-    loginSchema
+    loginSchema,
+    forgotPasswordSchema,
+    resetPasswordSchema
 };

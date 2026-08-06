@@ -1,6 +1,6 @@
 const AppError = require("../utils/AppError");
 const User = require("../models/user.model");
-const { generateVerificationToken, hashVerificationToken } = require("../utils/verificationToken");
+const { generateSecureToken , hashToken } = require("../utils/secureToken.js");
 const { sendEmail } = require("./email.service");
 const env = require("../config/env");
 
@@ -56,7 +56,7 @@ const registerUser = async ({name , email , password}) =>{
 };
 
 const loginUser = async ({email , password})=>{
-    const user = await User.findOne({email}).select("+password");
+    const user = await User.findOne({email}).select("+password +tokenVersion");
     
     if(!user){
         throw new AppError(
@@ -77,8 +77,8 @@ const loginUser = async ({email , password})=>{
         );
     }
 
-    const accessToken = generateAccessToken(user._id.toString());
-    const refreshToken = generateRefreshToken(user._id.toString());
+    const accessToken = generateAccessToken(user._id.toString() , user.tokenVersion);
+    const refreshToken = generateRefreshToken(user._id.toString() , user.tokenVersion);
 
     return {
         user: {
@@ -96,7 +96,7 @@ const loginUser = async ({email , password})=>{
 };
 
 const refreshAccessToken = async(userId) =>{
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select("+tokenVersion");
 
     if(!user){
         throw new AppError(
@@ -105,11 +105,18 @@ const refreshAccessToken = async(userId) =>{
         )
     }
 
-    return generateAccessToken(user._id.toString());
+    if (tokenVersion !== user.tokenVersion){
+        throw new AppError(
+            "Authentication session is no longer valid",
+            401
+        );
+    }
+
+    return generateAccessToken(user._id.toString() , user.tokenVersion);
 }
 
 const verifyEmail = async(token) =>{
-    const hashedToken = hashVerificationToken(token);
+    const hashedToken = hashToken(token);
 
     const user = await User.findOne({
         emailVerificationToken : hashedToken,
@@ -139,9 +146,73 @@ const verifyEmail = async(token) =>{
     };
 
 }
+
+const forgotPassword = async(email)=>{
+    const user = await User.findOne({ email });
+
+    if(!user){
+        return;
+    }
+
+    const {
+        rawToken,
+        hashedToken
+    } = generateSecureToken();
+
+    user.passwordResetToken = hashedToken;
+    user.passwordResetExpires = Date.now() + 15 * 60 * 1000;
+
+    await user.save();
+
+    const resetUrl =
+        `${env.clientUrl}/reset-password?token=${rawToken}`;
+
+    await sendEmail({
+        to: user.email,
+        subject: "Reset your DevForge password",
+        text:
+            `Reset your password using this link: ${resetUrl}`,
+        html:
+            `<p>Reset your DevForge password:</p>
+             <a href="${resetUrl}">
+                Reset Password
+             </a>`
+    });
+}
+
+const resetPassword = async(newPassword , token)=>{
+    const hashedPassword = hashToken(token);
+
+    const user = await User.findOne({
+        passwordResetToken : hashedPassword,
+        passwordResetExpires : {
+            $gt : Date.now()
+        }
+    }).select("+password +passwordResetToken +passwordResetExpires");
+
+    if (!user) {
+        throw new AppError(
+            "Password reset token is invalid or expired",
+            400
+        );
+    }    
+    const hashPassword = await bcrypt.hash(newPassword , 12);
+
+    user.password = hashPassword;
+
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+
+    user.tokenVersion += 1;
+    await user.save();
+
+}
+
 module.exports = {
     registerUser,
     loginUser,
     refreshAccessToken,
-    verifyEmail
+    verifyEmail,
+    forgotPassword,
+    resetPassword
 }

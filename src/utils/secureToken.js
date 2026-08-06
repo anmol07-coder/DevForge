@@ -1,6 +1,6 @@
 const crypto = require("crypto");
 
-const generateVerificationToken = () =>{
+const generateSecureToken = () =>{
     const rawToken = crypto
                     .randomBytes(32)
                     .toString("hex");
@@ -16,7 +16,7 @@ const generateVerificationToken = () =>{
     };
 };
 
-const hashVerificationToken = (token) =>{
+const hashToken = (token) =>{
     return crypto
            .createHash("sha256")
            .update(token)
@@ -24,6 +24,6 @@ const hashVerificationToken = (token) =>{
 }
 
 module.exports = {
-    generateVerificationToken,
-    hashVerificationToken
+    generateSecureToken,
+    hashToken
 }

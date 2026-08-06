@@ -86,7 +86,7 @@ const refresh = async(req , res , next) =>{
 
         const decoded = verifyRefreshToken(refreshToken);
 
-        const accessToken = await authService.refreshAccessToken(decoded.userId);
+        const accessToken = await authService.refreshAccessToken(decoded.userId , decoded.tokenVersion);
 
         res.status(200).json({
             success : true,
@@ -158,4 +158,46 @@ const verifyEmail = async (req, res, next) => {
     }
 };
 
-module.exports = {register , login , getCurrentUser , refresh , logout , verifyEmail};
+const forgotPassword = async(req , res , next)=>{
+    try{
+        await authService.forgotPassword(req.body.email);
+
+        res.status(200).json({
+            success: true,
+            message:
+                "If an account with that email exists, a password reset link has been sent."
+        });
+
+    }
+    catch(err){
+        next(err);
+    }
+}
+
+const resetPassword = async(req , res , next)=>{
+    try{
+        await authService.resetPassword(
+            req.body.password,
+            req.params.token
+        )
+
+        res.status(200).json({
+            success : true,
+            "message": "Password reset successfully"
+        })
+    }
+    catch(err){
+        next(err);
+    }
+}
+
+module.exports = {
+    register, 
+    login, 
+    getCurrentUser, 
+    refresh, 
+    logout, 
+    verifyEmail, 
+    forgotPassword,
+    resetPassword
+};

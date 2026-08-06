@@ -16,13 +16,21 @@ const authenticate = async(req , res , next) =>{
         const token = authHeader.split(" ")[1];
         const decoded = verifyAccessToken(token);
 
-        const user = await User.findById( decoded.userId );
+        const user = await User.findById( decoded.userId ).select("+tokenVersion");
 
         if (!user) {
             throw new AppError(
                 "User associated with this token no longer exists",
                 401
             );
+        }
+
+        if (decoded.tokenVersion !== user.tokenVersion){
+
+            throw new AppError(
+                "Authentication session is no longer valid",
+                401
+            )
         }
 
         req.user = user;
