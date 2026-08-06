@@ -1,5 +1,8 @@
 const AppError = require("../utils/AppError");
 const User = require("../models/user.model");
+const { generateVerificationToken, hashVerificationToken } = require("../utils/verificationToken");
+const { sendEmail } = require("./email.service");
+const env = require("../config/env");
 
 const { generateAccessToken , generateRefreshToken} = require("../utils/token.js")
 
@@ -15,15 +18,32 @@ const registerUser = async ({name , email , password}) =>{
         );
     }
 
+    const { rawToken , hashedToken } = generateVerificationToken();
     const hashedPassword = await bcrypt.hash(password , 12);
 
     const user = await User.create({
 
         name,
         email,
-        password : hashedPassword
+        password : hashedPassword,
+        emailVerificationToken : hashedToken,
+        emailVerificationExpires : Date.now() + 15 * 60 * 1000
 
     })
+
+    const verificationUrl = `${env.clientUrl}/verify-email?token=${rawToken}`;
+
+    await sendEmail({
+        to: user.email,
+        subject: "Verify your DevForge account",
+        text:
+            `Verify your email using this link: ${verificationUrl}`,
+        html: `
+            <p>Verify your email:</p>
+            <a href="${verificationUrl}">
+                Verify Email
+            </a>`
+    });
 
     return{
         id: user._id,
@@ -88,8 +108,40 @@ const refreshAccessToken = async(userId) =>{
     return generateAccessToken(user._id.toString());
 }
 
+const verifyEmail = async(token) =>{
+    const hashedToken = hashVerificationToken(token);
+
+    const user = await User.findOne({
+        emailVerificationToken : hashedToken,
+        emailVerificationExpires : {
+            $gt : Date.now()
+        }
+    }).select("+emailVerificationToken +emailVerificationExpires");
+
+    if (!user) {
+        throw new AppError(
+            "Verification token is invalid or expired",
+            400
+        );
+    }
+
+    user.isEmailVerified = true;
+
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpires = undefined;
+
+    await user.save();
+
+    return {
+        id: user._id,
+        email: user.email,
+        isEmailVerified: user.isEmailVerified
+    };
+
+}
 module.exports = {
     registerUser,
     loginUser,
-    refreshAccessToken
+    refreshAccessToken,
+    verifyEmail
 }

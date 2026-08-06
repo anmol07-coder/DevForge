@@ -139,4 +139,23 @@ const logout = async(req , res , next) =>{
     }
 }
 
-module.exports = {register , login , getCurrentUser , refresh , logout};
+const verifyEmail = async (req, res, next) => {
+    try {
+        const user =
+            await authService.verifyEmail(
+                req.params.token
+            );
+
+        res.status(200).json({
+            success: true,
+            message: "Email verified successfully",
+            data: {
+                user
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = {register , login , getCurrentUser , refresh , logout , verifyEmail};

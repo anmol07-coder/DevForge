@@ -8,7 +8,13 @@ const env = {
     jwtSecret : process.env.JWT_SECRET,
     jwtExpiresIn : process.env.JWT_EXPIRES_IN || "15m",
     jwtRefreshSecret : process.env.JWT_REFRESH_SECRET,
-    jwtRefreshExpiresIn : process.env.JWT_REFRESH_EXPIRES_IN || "7d"
+    jwtRefreshExpiresIn : process.env.JWT_REFRESH_EXPIRES_IN || "7d",
+    smtpHost : process.env.SMTP_HOST,
+    smtpPort : Number(process.env.SMTp_PORT),
+    smtpUser : process.env.SMTP_USER,
+    smtpPass : process.env.SMTP_PASS,
+    emailFrom : process.env.EMAIL_FROM,
+    clientUrl : process.env.CLIENT_URL
 };
 
 if(!env.mongoUri){
