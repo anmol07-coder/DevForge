@@ -18,7 +18,7 @@ const registerUser = async ({name , email , password}) =>{
         );
     }
 
-    const { rawToken , hashedToken } = generateVerificationToken();
+    const { rawToken , hashedToken } = generateSecureToken();
     const hashedPassword = await bcrypt.hash(password , 12);
 
     const user = await User.create({

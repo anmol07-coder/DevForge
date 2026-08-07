@@ -34,6 +34,7 @@ const authenticate = async(req , res , next) =>{
         }
 
         req.user = user;
+        console.log(req.user._id);
         next();
     }
     catch(err){

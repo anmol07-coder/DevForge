@@ -48,6 +48,35 @@ const userSchema = new mongoose.Schema({
         default: 0
     },
 
+    bio : {
+        type : String,
+        trim : true,
+        maxLength : 500,
+        default : ""
+    },
+
+    skills : {
+        type : [String],
+        default : []
+    },
+
+    socialLinks : {
+        github : {
+            type : String,
+            default : ""
+        },
+
+        linkedin : {
+            type : String,
+            default : ""
+        },
+
+        website : {
+            type : String,
+            default : ""
+        }
+    },
+
     role : {
         type : String,
         enum: ["member", "admin"],
