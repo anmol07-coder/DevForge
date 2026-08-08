@@ -1,6 +1,9 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
+const path = require("path");
+
 const app = express();
+
 
 const healthRouter = require("./routes/health.routes.js");
 const infoRouter = require("./routes/info.routes.js");
@@ -17,6 +20,7 @@ app.use("/api/v1/health" , healthRouter);
 app.use("/api/v1/info" , infoRouter);
 app.use("/api/v1/auth" , authRouter);
 app.use("/api/v1/users" , userRouter);
+app.use("/uploads" , express.static( path.join(__dirname , "uploads")));
 
 app.use(notFound);
 app.use(errorHandler);

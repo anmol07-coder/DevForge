@@ -95,7 +95,7 @@ const loginUser = async ({email , password})=>{
     };
 };
 
-const refreshAccessToken = async(userId) =>{
+const refreshAccessToken = async(userId , tokenVersion) =>{
     const user = await User.findById(userId).select("+tokenVersion");
 
     if(!user){

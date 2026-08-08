@@ -102,8 +102,8 @@ const refresh = async(req , res , next) =>{
 
     catch(err){
         if (
-            error.name === "JsonWebTokenError" ||
-            error.name === "TokenExpiredError"
+            err.name === "JsonWebTokenError" ||
+            err.name === "TokenExpiredError"
         ) {
             return next(
                 new AppError(
@@ -113,7 +113,7 @@ const refresh = async(req , res , next) =>{
             );
         }
 
-        next(error);
+        next(err);
     }
 }
 

@@ -1,4 +1,7 @@
+const User = require("../models/user.model");
 const userService = require("../services/user.service");
+const AppError = require("../utils/AppError");
+const path = require("path");
 
 const getMyProfile = async(req , res , next) =>{
     try{
@@ -11,6 +14,7 @@ const getMyProfile = async(req , res , next) =>{
                     id:user._id,
                     name:user.name,
                     email:user.email,
+                    avatar: user.avatar? `/uploads/avatars/${path.basename(user.avatar)}`: null,
                     bio:user.bio,
                     skills:user.skills,
                     socialLinks:user.socialLinks,
@@ -39,6 +43,7 @@ const updateMyProfile = async (req,res,next)=>{
                     id:updatedUser._id,
                     name:updatedUser.name,
                     email:updatedUser.email,
+                    avatar: user.avatar? `/uploads/avatars/${path.basename(user.avatar)}`: null,
                     bio:updatedUser.bio,
                     skills:updatedUser.skills,
                     socialLinks:updatedUser.socialLinks,
@@ -56,7 +61,53 @@ const updateMyProfile = async (req,res,next)=>{
 
 };
 
+const uploadAvatar = async(req , res , next) =>{
+    try{
+        if(!req.file){
+            throw new AppError(
+                "Please upload an image.",
+                400
+            );
+        }
+
+        const updatedUser = await userService.uploadAvatar(
+            req.user._id,
+            req.file.path
+        );
+
+        res.status(200).json({
+            success: true,
+            message: "Avatar uploaded successfully.",
+            data: {
+                avatar: `/uploads/avatars/${path.basename(updatedUser.avatar)}`
+            }
+        });
+    }
+    catch(err){
+        next(err)
+    }
+}
+
+const deleteAvatar = async(req , res , next) =>{
+    try{
+        const updatedUser = await userService.deleteUserAvatar(req.user._id);
+
+        res.status(200).json({
+            success: true,
+            message: "Avatar deleted successfully",
+            data: {
+                avatar: updatedUser.avatar
+            }
+        });
+    }
+    catch(err){
+        next(err);
+    }
+}
+
 module.exports = {
     getMyProfile,
-    updateMyProfile
+    updateMyProfile,
+    uploadAvatar,
+    deleteAvatar
 }
