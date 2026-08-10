@@ -3,6 +3,21 @@ const AppError = require("../utils/AppError");
 const fs = require("fs/promises");
 const path = require("path");
 
+const normalizeSkills = (skills) =>{
+    const seen = new Set();
+
+    return skills.filter((skill) =>{
+        const normalized = skill.trim().toLowerCase();
+
+        if(seen.has(normalized)){
+            return false;
+        }
+
+        seen.add(normalized);
+        return true;
+    })
+}
+
 const getUserProfile = async(userId) =>{
     const user = await User.findById(userId);
     if(!user){
@@ -26,15 +41,40 @@ const updateUserProfile = async(userId , profileData) =>{
     const updateData = {};
 
     for(const field of allowedFields){
-        if(profileData[field] !== undefined){
-            updateData[field] = profileData[field];
+        if(profileData[field] === undefined){
+            continue;
         }
+
+        if(field === "skills"){
+            updateData.skills = normalizeSkills(profileData.skills);
+            continue;
+        }
+
+        if(field === "socialLinks"){
+            const socialLinks = profileData.socialLinks;
+
+            if(socialLinks.github !== undefined){
+                updateData["socialLinks.github"] = socialLinks.github;
+            }
+
+            if(socialLinks.linkedin !== undefined){
+                updateData["socialLinks.linkedin"] = socialLinks.linkedin;
+            }
+
+            if(socialLinks.website !== undefined){
+                updateData["socialLinks.website"] = socialLinks.website;
+            }
+
+            continue;
+        }
+
+        updateData[field] = profileData[field];
     }
 
     const updatedUser = await User.findByIdAndUpdate(userId,
         updateData,
         {
-            new : true,
+            returnDocument : "after",
             runValidators : true
         }
     );
@@ -73,7 +113,7 @@ const uploadAvatar = async(userId , avatarPath) =>{
             await fs.unlink(oldAvatarAbsolutePath);
         }
         catch(err){
-            console.error("Failed to delete old avatar:",error);
+            console.error("Failed to delete old avatar:",err);
         }
     }
 
@@ -108,7 +148,7 @@ const deleteUserAvatar = async(userId) =>{
         await fs.unlink(avatarPath);
     }
     catch(err){
-        next(err);
+        throw err;
     }
 
     user.avatar = "";

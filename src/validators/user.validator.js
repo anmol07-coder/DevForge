@@ -16,7 +16,11 @@ const updateProfileSchema = z.object({
 
     skills : z
              .array(
-                z.string().trim().min(1)
+                z
+                .string()
+                .trim()
+                .min(1 ,"Skill can not be empty")
+                .max(50 , "Skill cannot exceed 50 characters")
              )
              .max(20, "You can add at most 20 skills")
              .optional(),

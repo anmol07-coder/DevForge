@@ -43,7 +43,7 @@ const updateMyProfile = async (req,res,next)=>{
                     id:updatedUser._id,
                     name:updatedUser.name,
                     email:updatedUser.email,
-                    avatar: user.avatar? `/uploads/avatars/${path.basename(user.avatar)}`: null,
+                    avatar: updatedUser.avatar? `/uploads/avatars/${path.basename(updatedUser.avatar)}`: null,
                     bio:updatedUser.bio,
                     skills:updatedUser.skills,
                     socialLinks:updatedUser.socialLinks,
