@@ -30,12 +30,86 @@ const createOrganization = async(userId , organizationData) =>{
         name : organizationData.name,
         slug,
         description : organizationData.description || " ",
+        logo : organizationData.logo || "",
         owner : userId
     })
 
     return organization;
 }
 
+const getOrganization = async(organizationId)=>{
+    const organization = await Organization.findById(organizationId);
+
+    if(!organization){
+        throw new AppError(
+            "Organization not found",
+            404
+        );
+    }
+
+    return organization;
+}
+
+const ensureOrganizationOwner = (organization , userId )=>{
+    if(organization.owner.toString() !== userId.toString()){
+        throw new AppError(
+            "You are not authorized to modify this organization.",
+            403
+        )
+    }
+}
+
+const updateOrganization = async(userId , organizationId , organizationData)=>{
+    const organization = await Organization.findById(organizationId);
+
+    if(!organization){
+        throw new AppError(
+            "Organization not found",
+            404
+        )
+    }
+
+    ensureOrganizationOwner(organization , userId);
+
+    const allowedFields = [
+        "name",
+        "description",
+        "logo"
+    ]
+
+    const updateData = {};
+    for(const field of allowedFields){
+        if(organizationData[field] !== undefined){
+            updateData[field] = organizationData[field];
+        }
+    }
+
+    if(updateData.name){
+        updateData.slug = generateSlug(updateData.name);
+    }
+
+    const updatedOrganization  = await Organization.findByIdAndUpdate(
+        organizationId,
+        updateData,
+        {
+            returnDocument : "after",
+            runValidators : true
+        }
+    )
+
+    if (!updatedOrganization) {
+        throw new AppError(
+            "Organization not found",
+            404
+        );
+    }
+
+    return updatedOrganization;
+}
+
 module.exports = {
-    createOrganization
+    createOrganization,
+    getOrganization,
+    ensureOrganizationOwner,
+    updateOrganization
 }
